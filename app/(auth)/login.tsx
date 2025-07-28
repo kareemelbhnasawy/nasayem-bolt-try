@@ -57,15 +57,16 @@ export default function LoginScreen() {
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.logoContainer}>
           <Image
-            source={{ uri: 'https://images.pexels.com/photos/263402/pexels-photo-263402.jpeg?auto=compress&cs=tinysrgb&w=200' }}
+            source={{ uri: 'https://nasaaem.com/storage/settings/July2021/uX3ONnnXMb5i31Lmh8ZQ.png' }}
             style={styles.logo}
+            resizeMode="contain"
           />
-          <Text style={[styles.hospitalName, isRTL && styles.textRTL]}>
+          {/* <Text style={[styles.hospitalName, isRTL && styles.textRTL]}>
             Nasaaem Hospital
           </Text>
           <Text style={[styles.hospitalNameAr, isRTL && styles.textRTL]}>
             مستشفى نسائم
-          </Text>
+          </Text> */}
         </View>
 
         <View style={styles.formContainer}>
@@ -165,9 +166,9 @@ const styles = StyleSheet.create({
     marginBottom: 40,
   },
   logo: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 200,
+    height: 150,
+    borderRadius: 20,
     marginBottom: 16,
   },
   hospitalName: {

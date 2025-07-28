@@ -14,6 +14,25 @@ export class AppointmentService {
   }
 
   static async bookAppointment(appointmentData: Omit<Appointment, 'id'>): Promise<Appointment> {
+    // Validate date and time
+    const selectedDateTime = new Date(`${appointmentData.date}T${appointmentData.time}`);
+    const now = new Date();
+
+    if (selectedDateTime < now) {
+      throw new Error('Cannot book appointments in the past');
+    }
+
+    // Validate doctor availability
+    const isAvailable = await this.checkDoctorAvailability(
+      appointmentData.doctorId,
+      appointmentData.date,
+      appointmentData.time
+    );
+
+    if (!isAvailable) {
+      throw new Error('Selected time slot is not available');
+    }
+
     await new Promise(resolve => setTimeout(resolve, 1000));
     
     const newAppointment: Appointment = {
@@ -22,6 +41,16 @@ export class AppointmentService {
     };
     
     return newAppointment;
+  }
+
+  private static async checkDoctorAvailability(
+    doctorId: string,
+    date: string,
+    time: string
+  ): Promise<boolean> {
+    // Mock availability check
+    await new Promise(resolve => setTimeout(resolve, 500));
+    return true;
   }
 
   static async cancelAppointment(appointmentId: string): Promise<boolean> {

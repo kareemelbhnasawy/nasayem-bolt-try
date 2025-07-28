@@ -10,20 +10,36 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSelector, useDispatch } from 'react-redux';
-import { Plus, Filter, Search, Calendar, Video, User } from 'lucide-react-native';
+import {
+  Plus,
+  Filter,
+  Search,
+  Calendar,
+  Video,
+  User,
+} from 'lucide-react-native';
 import { RootState } from '@/store';
 import { setAppointments } from '@/store/slices/appointmentSlice';
 import { AppHeader } from '@/components/AppHeader';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { mockDoctors, mockDepartments } from '@/data/mockData';
 import { AppointmentService } from '@/services/appointmentService';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { router, useLocalSearchParams } from 'expo-router';
 
 export default function AppointmentsScreen() {
   const { user } = useSelector((state: RootState) => state.auth);
-  const { appointments } = useSelector((state: RootState) => state.appointments);
+  const { appointments } = useSelector(
+    (state: RootState) => state.appointments
+  );
   const dispatch = useDispatch();
   const { t, language, isRTL } = useLanguage();
   const [filter, setFilter] = useState<'all' | 'upcoming' | 'completed'>('all');
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
+  const [date, setDate] = useState(new Date());
+  const [time, setTime] = useState(new Date());
+  const params = useLocalSearchParams();
 
   useEffect(() => {
     if (user) {
@@ -31,10 +47,19 @@ export default function AppointmentsScreen() {
     }
   }, [user]);
 
+  useEffect(() => {
+    if (params.selectedSlot) {
+      const slot = JSON.parse(params.selectedSlot as string);
+      bookWithDoctor(slot.doctorId, slot.date, slot.time);
+    }
+  }, [params.selectedSlot]);
+
   const loadAppointments = async () => {
     if (user) {
       try {
-        const userAppointments = await AppointmentService.getAppointments(user.id);
+        const userAppointments = await AppointmentService.getAppointments(
+          user.id
+        );
         dispatch(setAppointments(userAppointments));
       } catch (error) {
         console.error('Error loading appointments:', error);
@@ -43,45 +68,76 @@ export default function AppointmentsScreen() {
   };
 
   const handleBookAppointment = () => {
+    showDepartments();
+  };
+
+  const showDepartments = () => {
     Alert.alert(
-      'Book Appointment',
-      'Select department to start booking',
-      mockDepartments.map(dept => ({
-        text: language === 'ar' ? dept.nameAr : dept.name,
-        onPress: () => showDoctors(dept.id)
-      })).concat([{ text: 'Cancel', style: 'cancel' }])
+      'Select Department',
+      'Choose a medical department',
+      mockDepartments
+        .map((dept) => ({
+          text: language === 'ar' ? dept.nameAr : dept.name,
+          onPress: () => showDoctors(dept.id),
+        }))
+        .concat([{ text: 'Cancel', onPress: () => {}, style: 'cancel' }])
     );
   };
 
   const showDoctors = (departmentId: string) => {
-    const department = mockDepartments.find(d => d.id === departmentId);
-    const departmentDoctors = mockDoctors.filter(d => d.department === department?.name);
-    
+    const department = mockDepartments.find((d) => d.id === departmentId);
+    const departmentDoctors = mockDoctors.filter(
+      (d) => d.department === department?.name
+    );
+
     Alert.alert(
       'Select Doctor',
       `Available doctors in ${department?.name}`,
-      departmentDoctors.map(doctor => ({
-        text: `${language === 'ar' ? doctor.nameAr : doctor.name} - $${doctor.consultationFee}`,
-        onPress: () => bookWithDoctor(doctor.id)
-      })).concat([{ text: 'Back', style: 'cancel' }])
+      departmentDoctors
+        .map((doctor) => ({
+          text: `${language === 'ar' ? doctor.nameAr : doctor.name} - $${
+            doctor.consultationFee
+          }`,
+          onPress: () =>
+            router.push({
+              pathname: '/AppointmentPicker',
+              params: { doctorId: doctor.id },
+            }),
+        }))
+        .concat([{ text: 'Back', onPress: showDepartments }])
     );
   };
 
-  const bookWithDoctor = async (doctorId: string) => {
+  const onDateChange = (event: any, selectedDate: Date | undefined) => {
+    const currentDate = selectedDate || date;
+    setShowDatePicker(false);
+    setDate(currentDate);
+  };
+
+  const onTimeChange = (event: any, selectedTime: Date | undefined) => {
+    const currentTime = selectedTime || time;
+    setShowTimePicker(false);
+    setTime(currentTime);
+  };
+
+  const bookWithDoctor = async (doctorId: string, selectedDate?: string, selectedTime?: string) => {
     const doctor = mockDoctors.find(d => d.id === doctorId);
     if (!doctor || !user) return;
 
     try {
+      const appointmentDate = selectedDate || formatDate(date);
+      const appointmentTime = selectedTime || formatTime(time);
+
       const newAppointment = await AppointmentService.bookAppointment({
         doctorId,
         patientId: user.id,
-        date: '2024-12-30',
-        time: '10:00',
+        date: appointmentDate,
+        time: appointmentTime,
         type: 'in-person',
         status: 'scheduled',
         reason: 'Consultation'
       });
-      
+
       dispatch(setAppointments([...appointments, newAppointment]));
       Alert.alert('Success', 'Appointment booked successfully!');
     } catch (error) {
@@ -89,16 +145,32 @@ export default function AppointmentsScreen() {
     }
   };
 
+  const formatDate = (date: Date): string => {
+    return date.toISOString().split('T')[0];
+  };
+
+  const formatTime = (date: Date): string => {
+    return date.toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'scheduled': return '#52B788';
-      case 'completed': return '#6B7280';
-      case 'cancelled': return '#EF4444';
-      default: return '#F4A261';
+      case 'scheduled':
+        return '#52B788';
+      case 'completed':
+        return '#6B7280';
+      case 'cancelled':
+        return '#EF4444';
+      default:
+        return '#F4A261';
     }
   };
 
-  const filteredAppointments = appointments.filter(apt => {
+  const filteredAppointments = appointments.filter((apt) => {
     if (filter === 'all') return true;
     if (filter === 'upcoming') return apt.status === 'scheduled';
     if (filter === 'completed') return apt.status === 'completed';
@@ -108,36 +180,65 @@ export default function AppointmentsScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <AppHeader title={t('appointments')} />
-      
+
       <View style={styles.header}>
-        <View style={[styles.filterContainer, isRTL && styles.filterContainerRTL]}>
+        <View
+          style={[styles.filterContainer, isRTL && styles.filterContainerRTL]}
+        >
           <TouchableOpacity
-            style={[styles.filterButton, filter === 'all' && styles.activeFilter]}
+            style={[
+              styles.filterButton,
+              filter === 'all' && styles.activeFilter,
+            ]}
             onPress={() => setFilter('all')}
           >
-            <Text style={[styles.filterText, filter === 'all' && styles.activeFilterText]}>
+            <Text
+              style={[
+                styles.filterText,
+                filter === 'all' && styles.activeFilterText,
+              ]}
+            >
               All
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.filterButton, filter === 'upcoming' && styles.activeFilter]}
+            style={[
+              styles.filterButton,
+              filter === 'upcoming' && styles.activeFilter,
+            ]}
             onPress={() => setFilter('upcoming')}
           >
-            <Text style={[styles.filterText, filter === 'upcoming' && styles.activeFilterText]}>
+            <Text
+              style={[
+                styles.filterText,
+                filter === 'upcoming' && styles.activeFilterText,
+              ]}
+            >
               Upcoming
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.filterButton, filter === 'completed' && styles.activeFilter]}
+            style={[
+              styles.filterButton,
+              filter === 'completed' && styles.activeFilter,
+            ]}
             onPress={() => setFilter('completed')}
           >
-            <Text style={[styles.filterText, filter === 'completed' && styles.activeFilterText]}>
+            <Text
+              style={[
+                styles.filterText,
+                filter === 'completed' && styles.activeFilterText,
+              ]}
+            >
               Completed
             </Text>
           </TouchableOpacity>
         </View>
-        
-        <TouchableOpacity style={styles.bookButton} onPress={handleBookAppointment}>
+
+        <TouchableOpacity
+          style={styles.bookButton}
+          onPress={handleBookAppointment}
+        >
           <Plus size={20} color="#fff" />
           <Text style={styles.bookButtonText}>Book</Text>
         </TouchableOpacity>
@@ -146,33 +247,53 @@ export default function AppointmentsScreen() {
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {filteredAppointments.length > 0 ? (
           filteredAppointments.map((appointment) => {
-            const doctor = mockDoctors.find(d => d.id === appointment.doctorId);
+            const doctor = mockDoctors.find(
+              (d) => d.id === appointment.doctorId
+            );
             if (!doctor) return null;
 
             return (
               <TouchableOpacity
                 key={appointment.id}
                 style={styles.appointmentCard}
-                onPress={() => Alert.alert('Appointment Details', 'View appointment details')}
+                onPress={() =>
+                  Alert.alert('Appointment Details', 'View appointment details')
+                }
               >
-                <View style={[styles.cardContent, isRTL && styles.cardContentRTL]}>
-                  <Image source={{ uri: doctor.image }} style={styles.doctorImage} />
-                  
+                <View
+                  style={[styles.cardContent, isRTL && styles.cardContentRTL]}
+                >
+                  <Image
+                    source={{ uri: doctor.image }}
+                    style={styles.doctorImage}
+                  />
+
                   <View style={styles.appointmentInfo}>
                     <Text style={[styles.doctorName, isRTL && styles.textRTL]}>
                       {language === 'ar' ? doctor.nameAr : doctor.name}
                     </Text>
                     <Text style={[styles.specialty, isRTL && styles.textRTL]}>
-                      {language === 'ar' ? doctor.specialtyAr : doctor.specialty}
+                      {language === 'ar'
+                        ? doctor.specialtyAr
+                        : doctor.specialty}
                     </Text>
-                    
-                    <View style={[styles.appointmentDetails, isRTL && styles.appointmentDetailsRTL]}>
+
+                    <View
+                      style={[
+                        styles.appointmentDetails,
+                        isRTL && styles.appointmentDetailsRTL,
+                      ]}
+                    >
                       <View style={styles.detailItem}>
                         <Calendar size={16} color="#6B7280" />
-                        <Text style={styles.detailText}>{appointment.date}</Text>
+                        <Text style={styles.detailText}>
+                          {appointment.date}
+                        </Text>
                       </View>
                       <View style={styles.detailItem}>
-                        <Text style={styles.detailText}>{appointment.time}</Text>
+                        <Text style={styles.detailText}>
+                          {appointment.time}
+                        </Text>
                       </View>
                       <View style={styles.detailItem}>
                         {appointment.type === 'video' ? (
@@ -186,12 +307,21 @@ export default function AppointmentsScreen() {
                       </View>
                     </View>
                   </View>
-                  
+
                   <View style={styles.statusContainer}>
-                    <View style={[styles.status, { backgroundColor: getStatusColor(appointment.status) }]}>
-                      <Text style={styles.statusText}>{appointment.status}</Text>
+                    <View
+                      style={[
+                        styles.status,
+                        { backgroundColor: getStatusColor(appointment.status) },
+                      ]}
+                    >
+                      <Text style={styles.statusText}>
+                        {appointment.status}
+                      </Text>
                     </View>
-                    <Text style={styles.consultationFee}>${doctor.consultationFee}</Text>
+                    <Text style={styles.consultationFee}>
+                      ${doctor.consultationFee}
+                    </Text>
                   </View>
                 </View>
               </TouchableOpacity>
@@ -213,6 +343,24 @@ export default function AppointmentsScreen() {
               <Text style={styles.emptyStateButtonText}>Book Appointment</Text>
             </TouchableOpacity>
           </View>
+        )}
+
+        {showDatePicker && (
+          <DateTimePicker
+            value={date}
+            mode="date"
+            onChange={onDateChange}
+            minimumDate={new Date()}
+          />
+        )}
+
+        {showTimePicker && (
+          <DateTimePicker
+            value={time}
+            mode="time"
+            is24Hour={true}
+            onChange={onTimeChange}
+          />
         )}
       </ScrollView>
     </SafeAreaView>

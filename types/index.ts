@@ -80,3 +80,31 @@ export interface Bill {
   }[];
   dueDate: string;
 }
+
+export interface Department {
+  id: string;
+  name: string;
+  nameAr: string;
+  icon: string;
+  doctorCount: number;
+  image: string;
+}
+
+export interface TimeSlot {
+  time: string;
+  available: boolean;
+}
+
+export interface AppointmentFormData {
+  doctorId: string;
+  date: string;
+  time: string;
+  type: 'in-person' | 'video';
+  reason: string;
+}
+
+export interface AppointmentSlot {
+  date: string;
+  time: string;
+  doctorId: string;
+}

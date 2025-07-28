@@ -20,18 +20,23 @@ import {
   TrendingUp,
   Calendar,
 } from 'lucide-react-native';
+import { FlatList } from 'react-native';
 import { RootState } from '@/store';
 import { setRecords } from '@/store/slices/medicalRecordSlice';
 import { AppHeader } from '@/components/AppHeader';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { mockMedicalRecords, mockDoctors } from '@/data/mockData';
+import { useRouter } from 'expo-router';
 
 export default function RecordsScreen() {
   const { user } = useSelector((state: RootState) => state.auth);
   const { records } = useSelector((state: RootState) => state.medicalRecords);
   const dispatch = useDispatch();
   const { t, language, isRTL } = useLanguage();
-  const [selectedCategory, setSelectedCategory] = useState<'all' | 'lab' | 'imaging' | 'prescription' | 'vaccination' | 'vitals'>('all');
+  const router = useRouter();
+  const [selectedCategory, setSelectedCategory] = useState<
+    'all' | 'lab' | 'imaging' | 'prescription' | 'vaccination' | 'vitals'
+  >('all');
 
   useEffect(() => {
     if (user) {
@@ -41,39 +46,77 @@ export default function RecordsScreen() {
 
   const loadRecords = () => {
     if (user) {
-      const userRecords = mockMedicalRecords.filter(record => record.patientId === user.id);
+      const userRecords = mockMedicalRecords.filter(
+        (record) => record.patientId === user.id
+      );
       dispatch(setRecords(userRecords));
     }
   };
 
   const categories = [
-    { id: 'all', name: 'All', nameAr: 'الكل', icon: FileText, color: '#6B7280' },
-    { id: 'lab', name: 'Lab Results', nameAr: 'نتائج المختبر', icon: TestTube, color: '#EF4444' },
-    { id: 'imaging', name: 'Imaging', nameAr: 'الأشعة', icon: Camera, color: '#3B82F6' },
-    { id: 'prescription', name: 'Prescriptions', nameAr: 'الوصفات', icon: Pill, color: '#10B981' },
-    { id: 'vaccination', name: 'Vaccinations', nameAr: 'التطعيمات', icon: Syringe, color: '#8B5CF6' },
-    { id: 'vitals', name: 'Vital Signs', nameAr: 'العلامات الحيوية', icon: Activity, color: '#F59E0B' },
+    {
+      id: 'all',
+      name: 'All',
+      nameAr: 'الكل',
+      icon: FileText,
+      color: '#6B7280',
+    },
+    {
+      id: 'lab',
+      name: 'Lab Results',
+      nameAr: 'نتائج المختبر',
+      icon: TestTube,
+      color: '#EF4444',
+    },
+    {
+      id: 'imaging',
+      name: 'Imaging',
+      nameAr: 'الأشعة',
+      icon: Camera,
+      color: '#3B82F6',
+    },
+    {
+      id: 'prescription',
+      name: 'Prescriptions',
+      nameAr: 'الوصفات',
+      icon: Pill,
+      color: '#10B981',
+    },
+    {
+      id: 'vaccination',
+      name: 'Vaccinations',
+      nameAr: 'التطعيمات',
+      icon: Syringe,
+      color: '#8B5CF6',
+    },
+    {
+      id: 'vitals',
+      name: 'Vital Signs',
+      nameAr: 'العلامات الحيوية',
+      icon: Activity,
+      color: '#F59E0B',
+    },
   ];
 
-  const filteredRecords = records.filter(record => {
+  const filteredRecords = records.filter((record) => {
     if (selectedCategory === 'all') return true;
     return record.type === selectedCategory;
   });
 
   const getRecordIcon = (type: string) => {
-    const category = categories.find(cat => cat.id === type);
+    const category = categories.find((cat) => cat.id === type);
     return category ? category.icon : FileText;
   };
 
   const getRecordColor = (type: string) => {
-    const category = categories.find(cat => cat.id === type);
+    const category = categories.find((cat) => cat.id === type);
     return category ? category.color : '#6B7280';
   };
 
   const renderRecordCard = (record: any) => {
     const Icon = getRecordIcon(record.type);
     const color = getRecordColor(record.type);
-    const doctor = mockDoctors.find(d => d.id === record.doctorId);
+    const doctor = mockDoctors.find((d) => d.id === record.doctorId);
 
     return (
       <TouchableOpacity
@@ -82,7 +125,9 @@ export default function RecordsScreen() {
         onPress={() => showRecordDetails(record)}
       >
         <View style={[styles.recordHeader, isRTL && styles.recordHeaderRTL]}>
-          <View style={[styles.iconContainer, { backgroundColor: color + '20' }]}>
+          <View
+            style={[styles.iconContainer, { backgroundColor: color + '20' }]}
+          >
             <Icon size={24} color={color} />
           </View>
           <View style={styles.recordInfo}>
@@ -90,7 +135,11 @@ export default function RecordsScreen() {
               {language === 'ar' ? record.titleAr : record.title}
             </Text>
             <Text style={[styles.recordDoctor, isRTL && styles.textRTL]}>
-              {doctor ? (language === 'ar' ? doctor.nameAr : doctor.name) : 'Unknown Doctor'}
+              {doctor
+                ? language === 'ar'
+                  ? doctor.nameAr
+                  : doctor.name
+                : 'Unknown Doctor'}
             </Text>
             <View style={[styles.recordMeta, isRTL && styles.recordMetaRTL]}>
               <Calendar size={14} color="#6B7280" />
@@ -98,22 +147,38 @@ export default function RecordsScreen() {
             </View>
           </View>
           <View style={styles.recordActions}>
-            <TouchableOpacity style={styles.actionButton}>
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={() => router.push({ pathname: '/recordsDetails', params: { record: JSON.stringify(record) } })}
+            >
               <Text style={styles.actionButtonText}>View</Text>
             </TouchableOpacity>
           </View>
         </View>
-        
+
         {record.type === 'lab' && record.data && (
           <View style={styles.labData}>
             {Object.entries(record.data).map(([key, value]: [string, any]) => (
-              <View key={key} style={[styles.labItem, isRTL && styles.labItemRTL]}>
+              <View
+                key={key}
+                style={[styles.labItem, isRTL && styles.labItemRTL]}
+              >
                 <Text style={styles.labName}>{key.toUpperCase()}</Text>
                 <View style={styles.labResult}>
-                  <Text style={[styles.labValue, { color: value.status === 'elevated' ? '#EF4444' : '#10B981' }]}>
+                  <Text
+                    style={[
+                      styles.labValue,
+                      {
+                        color:
+                          value.status === 'elevated' ? '#EF4444' : '#10B981',
+                      },
+                    ]}
+                  >
                     {value.value} {value.unit}
                   </Text>
-                  <Text style={styles.labRange}>Normal: {value.normalRange}</Text>
+                  <Text style={styles.labRange}>
+                    Normal: {value.normalRange}
+                  </Text>
                 </View>
               </View>
             ))}
@@ -125,11 +190,13 @@ export default function RecordsScreen() {
 
   const showRecordDetails = (record: any) => {
     let details = `Date: ${record.date}\n`;
-    
+
     if (record.type === 'lab' && record.data) {
       details += '\nResults:\n';
       Object.entries(record.data).forEach(([key, value]: [string, any]) => {
-        details += `${key.toUpperCase()}: ${value.value} ${value.unit} (Normal: ${value.normalRange})\n`;
+        details += `${key.toUpperCase()}: ${value.value} ${
+          value.unit
+        } (Normal: ${value.normalRange})\n`;
       });
     } else if (record.type === 'prescription' && record.data?.medications) {
       details += '\nMedications:\n';
@@ -137,55 +204,46 @@ export default function RecordsScreen() {
         details += `${med.name} - ${med.dosage} - ${med.frequency}\n`;
       });
     }
-    
-    Alert.alert(
-      language === 'ar' ? record.titleAr : record.title,
-      details
-    );
+
+    Alert.alert(language === 'ar' ? record.titleAr : record.title, details);
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <AppHeader title={t('records')} />
-      
-      {/* Category Filter */}
-      <ScrollView
+      {/* Compact Category Filter */}
+      <FlatList
+        data={categories}
+        keyExtractor={(item) => item.id}
         horizontal
         showsHorizontalScrollIndicator={false}
-        style={styles.categoryFilter}
-        contentContainerStyle={styles.categoryFilterContent}
-      >
-        {categories.map((category) => {
+        style={styles.compactCategoryFilter}
+        contentContainerStyle={styles.compactCategoryContent}
+        renderItem={({ item: category }) => {
           const Icon = category.icon;
           const isSelected = selectedCategory === category.id;
-          
           return (
             <TouchableOpacity
               key={category.id}
               style={[
-                styles.categoryButton,
-                isSelected && [styles.selectedCategory, { backgroundColor: category.color }]
+                styles.compactCategoryButton,
+                isSelected && { backgroundColor: category.color },
               ]}
               onPress={() => setSelectedCategory(category.id as any)}
             >
-              <Icon
-                size={20}
-                color={isSelected ? '#fff' : category.color}
-              />
+              <Icon size={14} color={isSelected ? '#fff' : category.color} />
               <Text
                 style={[
-                  styles.categoryText,
-                  isSelected && styles.selectedCategoryText,
-                  isRTL && styles.textRTL
+                  styles.compactCategoryText,
+                  isSelected && { color: '#fff' },
                 ]}
               >
                 {language === 'ar' ? category.nameAr : category.name}
               </Text>
             </TouchableOpacity>
           );
-        })}
-      </ScrollView>
-
+        }}
+      />
       {/* Records List */}
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {filteredRecords.length > 0 ? (
@@ -211,23 +269,35 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F9FAFB',
   },
-  categoryFilter: {
+  compactCategoryFilter: {
     backgroundColor: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: '#E5E7EB',
+    maxHeight: 100,
   },
-  categoryFilterContent: {
+  compactCategoryContent: {
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 8,
+    alignItems: 'center',
   },
-  categoryButton: {
+  compactCategoryButton: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     paddingHorizontal: 16,
     paddingVertical: 8,
     marginRight: 12,
-    borderRadius: 20,
-    backgroundColor: '#F3F4F6',
+    borderRadius: 12,
+    backgroundColor: '#F9FAFB',
+    height: 60,
+    width: 80,
+  },
+  compactCategoryText: {
+    marginLeft: 4,
+    fontSize: 11,
+    fontWeight: '500',
+    color: '#6B7280',
+    textAlign: 'center',
   },
   selectedCategory: {
     backgroundColor: '#2E86AB',
