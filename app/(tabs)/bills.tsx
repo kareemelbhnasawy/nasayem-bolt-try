@@ -58,7 +58,7 @@ export default function BillsScreen() {
       'Select payment method',
       [
         { text: 'Credit Card', onPress: () => processCreditCardPayment(billId) },
-        { text: 'Insurance', onPress: () => processInsurancePayment(billId) },
+        // { text: 'Insurance', onPress: () => processInsurancePayment(billId) },
         { text: 'Cash', onPress: () => processCashPayment(billId) },
         { text: 'Cancel', style: 'cancel' },
       ]
@@ -115,11 +115,11 @@ export default function BillsScreen() {
           <Text style={styles.summaryLabel}>Overdue Bills</Text>
         </View>
         
-        <View style={[styles.summaryCard, { backgroundColor: '#10B981' }]}>
+        {/* <View style={[styles.summaryCard, { backgroundColor: '#10B981' }]}>
           <Shield size={24} color="#fff" />
           <Text style={styles.summaryAmount}>{user?.insurance.provider}</Text>
           <Text style={styles.summaryLabel}>Insurance</Text>
-        </View>
+        </View> */}
       </ScrollView>
 
       {/* Filter Buttons */}
@@ -186,7 +186,7 @@ export default function BillsScreen() {
                         <Text style={[styles.itemDescription, isRTL && styles.textRTL]}>
                           {item.description}
                         </Text>
-                        <View style={styles.itemDetails}>
+                        {/* <View style={styles.itemDetails}>
                           <Text style={styles.itemAmount}>${item.amount}</Text>
                           {item.insuranceCovered && (
                             <View style={styles.insuranceBadge}>
@@ -194,7 +194,7 @@ export default function BillsScreen() {
                               <Text style={styles.insuranceText}>Covered</Text>
                             </View>
                           )}
-                        </View>
+                        </View> */}
                       </View>
                     </View>
                   ))}
@@ -227,16 +227,19 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: '#E5E7EB',
+     maxHeight: 200,
   },
   summaryContent: {
     paddingHorizontal: 16,
     paddingVertical: 16,
+    alignItems: 'center',
   },
   summaryCard: {
     width: 120,
     height: 100,
     borderRadius: 12,
     padding: 16,
+    paddingTop:10,
     marginRight: 12,
     justifyContent: 'space-between',
   },

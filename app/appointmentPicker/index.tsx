@@ -185,7 +185,8 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   dateScroll: {
-    marginBottom: 24,
+    marginVertical: 24,
+    maxHeight:100
   },
   dateButton: {
     padding: 12,
@@ -194,12 +195,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#F3F4F6',
     minWidth: 80,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   selectedDate: {
     backgroundColor: '#2E86AB',
   },
   dateText: {
     color: '#6B7280',
+    fontSize: 16,
   },
   selectedDateText: {
     color: '#fff',

@@ -100,7 +100,7 @@ export default function AppointmentsScreen() {
           }`,
           onPress: () =>
             router.push({
-              pathname: '/AppointmentPicker',
+              pathname: '/appointmentPicker',
               params: { doctorId: doctor.id },
             }),
         }))

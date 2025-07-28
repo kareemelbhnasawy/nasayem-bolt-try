@@ -108,3 +108,14 @@ export interface AppointmentSlot {
   time: string;
   doctorId: string;
 }
+
+export interface AppointmentPickerParams {
+  doctorId: string;
+  selectedSlot?: string;
+}
+
+export type AppointmentPickerScreenProps = {
+  route: {
+    params: AppointmentPickerParams;
+  };
+}

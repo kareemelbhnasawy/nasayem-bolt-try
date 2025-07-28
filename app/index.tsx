@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { router } from 'expo-router';
+import { router, Redirect } from 'expo-router';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { View, Text, StyleSheet } from 'react-native';
@@ -38,3 +38,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 });
+
+// Add route typing for TypeScript support
+declare global {
+  namespace ReactNavigation {
+    interface RootParamList {
+      appointmentPicker: { doctorId: string };
+      // ...existing routes...
+    }
+  }
+}
