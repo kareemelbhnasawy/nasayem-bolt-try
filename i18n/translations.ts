@@ -3,7 +3,8 @@ export const translations = {
     // Navigation
     dashboard: 'Dashboard',
     appointments: 'Appointments',
-    records: 'Medical Records',
+    // records: 'Medical Records',
+    records: 'Records',
     bills: 'Bills',
     profile: 'Profile',
     emergency: 'Emergency',
@@ -56,7 +57,8 @@ export const translations = {
     // Navigation
     dashboard: 'الرئيسية',
     appointments: 'المواعيد',
-    records: 'السجلات الطبية',
+    // records: 'السجلات الطبية',
+    records: 'السجلات',
     bills: 'الفواتير',
     profile: 'الملف الشخصي',
     emergency: 'الطوارئ',

@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { router, Redirect } from 'expo-router';
+import { router } from 'expo-router';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { View, Text, StyleSheet } from 'react-native';
@@ -10,7 +10,8 @@ export default function IndexScreen() {
   const frameworkReady = useFrameworkReady();
 
   useEffect(() => {
-    if (!frameworkReady || typeof isAuthenticated === 'undefined') return;
+    if (!frameworkReady) return;
+    if (typeof isAuthenticated === 'undefined') return;
     if (isAuthenticated) {
       router.replace('/(tabs)');
     } else {
